@@ -23,7 +23,7 @@ class Rectangle:
 
   @property
   def pos(self):
-    return (self.x, self.y)
+    return Vector2(self.x, self.y)
 
   @pos.setter
   def pos(self, pos):
