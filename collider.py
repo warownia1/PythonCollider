@@ -1,5 +1,10 @@
 from collections import namedtuple
-import pygame
+try:
+  import pygame
+except ImportError:
+  pygame = None
+
+__all__ = ['Vector2', 'Collision', 'Rect', 'World']
 
 Vector2 = namedtuple('Vector2', 'x, y')
 Collision = namedtuple('Collision', 'rect, distance, normal, touch, response')
@@ -31,6 +36,11 @@ class Rect:
   @size.setter
   def size(self, size):
     self.w, self.h = size
+
+  if pygame is not None:
+    @property
+    def pygame_rect(self):
+      return pygame.Rect(self.x, self.y, self.w, self.h)
 
   def collide_rect(self, other):
     return (
