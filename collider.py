@@ -4,22 +4,22 @@ try:
 except ImportError:
   pygame = None
 
-__all__ = ['Vector2', 'Collision', 'Rect', 'World']
+__all__ = ['Vector2', 'Collision', 'Rectangle', 'World']
 
 Vector2 = namedtuple('Vector2', 'x, y')
 Collision = namedtuple('Collision', 'rect, distance, normal, touch, response')
 
-class Rect:
+class Rectangle:
   def __init__(self, x, y, w, h):
     self.x, self.y = x, y
     self.w, self.h = w, h
 
   @classmethod
   def from_pos_size(cls, pos, size):
-    return Rect(pos[0], pos[1], size[0], size[1])
+    return Rectangle(pos[0], pos[1], size[0], size[1])
 
   def copy(self):
-    return Rect(self.x, self.y, self.w, self.h)
+    return Rectangle(self.x, self.y, self.w, self.h)
 
   @property
   def pos(self):
@@ -59,7 +59,7 @@ class Rect:
   collidepoint = collide_point
 
   def minkowski_diff(self, other):
-    return Rect(
+    return Rectangle(
       self.x - other.x - other.w,
       self.y - other.y - other.h,
       self.w + other.w,
@@ -67,11 +67,11 @@ class Rect:
     )
 
   def __repr__(self):
-    return "Rect((%f, %f), (%f, %f))" % (self.x, self.y, self.w, self.h)
+    return "Rectangle((%f, %f), (%f, %f))" % (self.x, self.y, self.w, self.h)
 
 
 def minkowski_diff(r1, r2):
-  return Rect(
+  return Rectangle(
     r1.x - r2.x - r2.w,
     r1.y - r2.y - r2.h, 
     r1.w + r2.w, 
@@ -115,7 +115,7 @@ def pass_response(world, origin, cols, target, filter):
 
 def slide_response(world, origin, cols, target, filter):
   col = cols[0]
-  new_rect = Rect.from_pos_size(col.touch, origin.size)
+  new_rect = Rectangle.from_pos_size(col.touch, origin.size)
   if col.normal.x != 0:
     new_target = Vector2(new_rect.x, target.y)
   elif col.normal.y != 0:
@@ -127,7 +127,7 @@ def slide_response(world, origin, cols, target, filter):
 
 def bounce_response(world, origin, cols, target, filter):
   col = cols[0]
-  new_rect = Rect.from_pos_size(col.touch, origin.size)
+  new_rect = Rectangle.from_pos_size(col.touch, origin.size)
   if col.normal.x != 0:
     new_target = Vector2(2 * col.touch.x - target.x, target.y)
   elif col.normal.y != 0:
@@ -139,7 +139,7 @@ def bounce_response(world, origin, cols, target, filter):
 
 def return_response(world, origin, cols, target, filter):
   col = cols[0]
-  new_rect = Rect.from_pos_size(col.touch, origin.size)
+  new_rect = Rectangle.from_pos_size(col.touch, origin.size)
   new_target = Vector2(2 * col.touch.x - target.x, 2 * col.touch.y - target.y)
   return new_target, world.sweep(new_rect, new_target, filter)
 
@@ -157,6 +157,12 @@ class World:
   def __init__(self):
     self.rects = []
 
+  def add(self, rect):
+    self.rects.append(rect)
+
+  def remove(self, rect):
+    self.rects.remove(rect)
+
   def check_move(self, rect, target, filter):
     def filter_wrapper(other):
       if other != rect: return filter(rect, other)
@@ -164,7 +170,7 @@ class World:
     return self.resolve(rect, target, filter_wrapper)
 
   def sweep(self, origin, target, filter):
-    bounds = Rect(
+    bounds = Rectangle(
       min(origin.x, target.x),
       min(origin.y, target.y),
       abs(origin.x - target.x) + origin.w,
